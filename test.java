@@ -277,8 +277,8 @@ class Program{
     }
 
     public static void StartLFTUCServer(String IPAddress, int port, float swim, boolean lmao){
-        String message = "\nStarting Server At: " + IPAddress + ":" + port + "/" + swim + "\\" + lmao;
-        returnValue = "string" + message;
+        String message = ("Starting Server At: " + IPAddress + ":" + port + "/" + swim + "\\" + lmao);
+        returnValue = "string" + message; //if you wanna parse your output, include its datatype as a prefix with no space
         System.out.println(returnValue);
         WriteInLogs(returnValue);
     }
