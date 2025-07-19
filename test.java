@@ -1,9 +1,10 @@
 import java.util.*;
 import java.lang.reflect.*;
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,19 +38,17 @@ class Program{
         }
     }
 
-    //Json file REF that we're gonna check the method requests in
-    public static String methodInvocReq_Path_String = "command_Invoc_Requests.json";    
-    public static File methodInvocReq_Json = new File(methodInvocReq_Path_String);//file handler object
-    //Json Array to store all the statements from our json file
-    public static List<InvocDataClass> InvocFileData;
-    //Json Invoc Request File Data Format Declaration For Deserialization
+    //save the outout or return value or error produced by desired function here
+    public static Object returnValue; // could be anything, string/int/float/double/bool - type declaration will be used ("{datatype}{returnValue}", eg-> "int8080")
+
+    //Save log's file path to create logs in a specified path
+    public static String LogFilePath;
+    //Invoc Request Data Format Declaration For Deserialization
     public static class InvocDataClass{
-        public int Index;
         public String CommandCode;
         public String MethodToInvocate;
 
-        public InvocDataClass(int index, String CMDCode, String Method){
-            this.Index = index;
+        public InvocDataClass(String CMDCode, String Method){
             this.CommandCode = CMDCode;
             this.MethodToInvocate = Method;
         }
@@ -59,7 +58,7 @@ class Program{
     public static void CreateLogFile(String name){
         //try to create a .txt file with the name passed as an argument
         try{
-            String logFilePathStr = "C:/Users/DESKTOP-A/Desktop/test-environment/" + name + ".txt";
+            String logFilePathStr = LogFilePath;
             Path logFilePath = Paths.get(logFilePathStr);
 
             Files.writeString(logFilePath, "" + System.lineSeparator(),
@@ -80,7 +79,7 @@ class Program{
     //call this directly to create a log file (if not already there) and then write in it as normal
     public static void WriteInLogs(String name, String line, String logCode) {
         try {
-            String baseDir = "C:/Users/DESKTOP-A/Desktop/test-environment/";
+            String baseDir = LogFilePath;
             Path dirPath = Paths.get(baseDir);
             if (!Files.exists(dirPath)) {
                 Files.createDirectories(dirPath);
@@ -230,7 +229,7 @@ class Program{
     //**entry point**//
     //ENTRY POINT of the program (this code block runs as the start point of the script because it has the 'main' method signature as the name).
     public static void main(String[] args) {
-        if (args.length != 0) {
+        if (args.length >= 2) { // arg[0]: contains the port of the localhost server; arg[1]: contains the path for log file (eg->"C://Users/Downloads/log.txt")
             int port;
             try {
                 port = Integer.parseInt(args[0]);
@@ -240,17 +239,24 @@ class Program{
                 System.out.println("Can't parse port: " + ex);
             }
 
+            LogFilePath = args[1]; //assign the second arg to as the value to LogFilePath
+
             try (
+                //the below socket, out and in are allocated to this try statement's code block and will be automatically removed from memory one the block exits or finished execution
                 Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             ) {
                 System.out.println("Connection to CSX server successful");
 
                 // ❗ Wait indefinitely for message (blocking call)
                 String receivedMessage;
-                while ((receivedMessage = in.readLine()) != null) {
-                    if (!receivedMessage.trim().isEmpty()) {
+                while (!(receivedMessage = in.readLine()).equals("exit")) {
+                    if (!receivedMessage.trim().isEmpty() && receivedMessage.contains("-")) {
                         System.out.println("Received: " + receivedMessage);
+                        RunMethod(receivedMessage);
+                        out.write(returnValue.toString());
+                        out.flush();
                         WriteInLogs("LFTUCPCLogs", receivedMessage);
                         break; // 🔁 Exit after logging the first valid message
                     }
@@ -271,7 +277,8 @@ class Program{
     }
 
     public static void StartLFTUCServer(String IPAddress, int port, float swim, boolean lmao){
-        String message = "\nStarting Server At: " + IPAddress + ":" + port + "/" + swim + "\\" + lmao; 
+        String message = "\nStarting Server At: " + IPAddress + ":" + port + "/" + swim + "\\" + lmao;
+        returnValue = "string" + message;
         System.out.println(message);
         WriteInLogs("LFTUCPCLogs", message);
     }

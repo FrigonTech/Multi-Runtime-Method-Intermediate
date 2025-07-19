@@ -14,7 +14,11 @@ public static string fileName = "command_Invoc_Requests.json";
 public static TcpClient client;
 public static int port = 54321;
 
-string response = ""; // Use JSON if needed
+public static string LogsFilePath = "C:/Users/DESKTOP-A/Desktop/test-environment/";
+
+public static string Message = ""; // Use JSON if needed
+
+public static bool ExitIntermediate = false;
 
 public class MethodInvocRequest
 {
@@ -36,23 +40,22 @@ public static void InitiateService()
         var server = new TcpListener(IPAddress.Loopback, port);
         server.Start();
         Console.WriteLine($"Server started on 127.0.0.1:{port} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
+        StartJavaProcess();
         // Loop to accept one client at a time
-        while (true)
+        while (!ExitIntermediate)
         {
-            MakeMethodInvocRequest("lmai");
             client = server.AcceptTcpClient(); // Blocks until a client connects
             Console.WriteLine($"Client connected at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
             // Keep client open until it disconnects
             while (client != null && client.Connected)
             {
                 SendCommand();//sends command
-                Console.WriteLine($"Client disconnected at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
-                EndService();
-                System.Threading.Thread.Sleep(100); // Prevent tight loop
+                Console.WriteLine(ReceiveReturnedValue());
             }
-            
+
             break;
         }
+        EndService();
     }
     catch (SocketException e)
     {
@@ -66,8 +69,7 @@ public static void SendCommand()
     {
         try
         {
-            string response = ""; // Use JSON if needed
-            byte[] responseBytes = Encoding.UTF8.GetBytes(response + Environment.NewLine);
+            byte[] responseBytes = Encoding.UTF8.GetBytes(Message + Environment.NewLine);
             client.GetStream().Write(responseBytes, 0, responseBytes.Length);
             Console.WriteLine($"Sent to client: {response} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
         }
@@ -82,16 +84,48 @@ public static void SendCommand()
     }
 }
 
+public static string ReceiveReturnedValue()
+{
+    string returns = "";
+    if (client != null && client.Connected)
+    {
+        try
+        {
+            using (StreamReader reader = new StreamReader(client.GetStream()))
+            {
+                returns = reader.ReadLine();
+                Console.WriteLine($"Received from client: {returns} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
+            }
+        }
+        catch (IOException e)
+        {
+            Console.WriteLine("Error receiving message: " + e.Message);
+        }
+    }
+    else
+    {
+        Console.WriteLine("No client connected, can't receive message :|");
+    }
+
+    return returns;
+}
+
 public static void EndService()
 {
     try
     {
         if (client != null || !client.Connected)
         {
+            Message = "exit";
+            SendCommand();// sends graceful exit code
             client.GetStream().Close();
             client.Close();
             Console.WriteLine($"Client connection closed at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
         }
+    }
+    catch (IOException e)
+    {
+        Console.WriteLine("Error during graceful exit: " + e.Message);
     }
     catch (Exception e)
     {
@@ -99,13 +133,13 @@ public static void EndService()
     }
 }
 
-public static void MakeMethodInvocRequest(string function)
+public static void StartJavaProcess()
 {
     // Launch Java client (original process control)
     var javaProcess = new ProcessStartInfo
     {
         FileName = "cmd.exe",
-        Arguments = $"/c javac test.java && java -cp \".;lib/*\" Program {port}",
+        Arguments = $"/c javac test.java && java -cp \".;lib/*\" Program {port} {LogsFilePath}",
         /*
         "/c {compiler} {filename} && {runtime} -cp \".;{lib folder}/*\" {entry-class} {arguments}"
         */
@@ -140,11 +174,12 @@ while (!exit)
     if (line.Contains("-"))
     {
         Console.WriteLine(line);
+        Message = line.Trim();
         InitiateService();
     }
     else if (line.Contains("exit"))
     {
-        EndService();
+        ExitIntermediate = true;
         break;
     }
 }
