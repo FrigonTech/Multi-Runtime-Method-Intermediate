@@ -71,7 +71,7 @@ public static void SendCommand()
         {
             byte[] responseBytes = Encoding.UTF8.GetBytes(Message + Environment.NewLine);
             client.GetStream().Write(responseBytes, 0, responseBytes.Length);
-            Console.WriteLine($"Sent to client: {response} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
+            Console.WriteLine($"Sent to client: {Message} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
         }
         catch (IOException e)
         {
