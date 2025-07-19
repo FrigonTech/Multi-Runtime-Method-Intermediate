@@ -1,5 +1,7 @@
 ## 🔁 MRMI – Multi-Runtime Method Intermediate
 
+<img width="380" height="380" alt="MRMI" src="https://github.com/user-attachments/assets/f6617577-5104-49b4-b506-ba9e6102cf9d" />
+
 **MRMI** (Multi-Runtime Method Intermediate) is an original cross-runtime communication technique developed by **Frigon Tech**. It enables one compiled program to invoke functions in another compiled module — regardless of language — using socket-based messaging and a standardized, typed command format.
 
 ### ⚙️ How It Works
