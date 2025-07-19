@@ -39,7 +39,7 @@ class Program{
     }
 
     //save the outout or return value or error produced by desired function here
-    public static Object returnValue; // could be anything, string/int/float/double/bool - type declaration will be used ("{datatype}{returnValue}", eg-> "int8080")
+    public static String returnValue; // could be anything, string/int/float/double/bool - type declaration will be used ("{datatype}{returnValue}", eg-> "int8080")
 
     //Save log's file path to create logs in a specified path
     public static String LogFilePath;
@@ -255,7 +255,7 @@ class Program{
                     if (!receivedMessage.trim().isEmpty() && receivedMessage.contains("-")) {
                         System.out.println("Received: " + receivedMessage);
                         RunMethod(receivedMessage);
-                        out.write(returnValue.toString());
+                        out.write(returnValue);
                         out.flush();
                         WriteInLogs(receivedMessage);
                         break; // 🔁 Exit after logging the first valid message
@@ -278,8 +278,8 @@ class Program{
 
     public static void StartLFTUCServer(String IPAddress, int port, float swim, boolean lmao){
         String message = "\nStarting Server At: " + IPAddress + ":" + port + "/" + swim + "\\" + lmao;
-        System.out.println(message);
-        WriteInLogs(message);
         returnValue = "string" + message;
+        System.out.println(returnValue);
+        WriteInLogs(returnValue);
     }
 }
