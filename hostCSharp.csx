@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-//*import System.Exception.frigontech;*
+
 
 public static int commandCodeIndex = 0;
 public static string fileName = "command_Invoc_Requests.json";
