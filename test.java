@@ -103,7 +103,7 @@ class Program{
     //parse the data and convert it to its right type with the help of its data class part sent with the value (ex: int8080 for 'int' '8080')
     public static Object ParseDataType(String RawParameter){
         //parse data into the data class and save it in java
-        if(StartsWithAny(RawParameter, "string", "str")){
+        if(RawParameter.startsWith("string")){
             return RawParameter.substring("string".length());
         }
         else if(RawParameter.startsWith("int")){

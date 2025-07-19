@@ -50,7 +50,7 @@ public static void InitiateService()
             while (client != null && client.Connected)
             {
                 SendCommand();//sends command
-                Console.WriteLine(ReceiveReturnedValue());
+                Console.WriteLine("got from client: " + ReceiveReturnedValue());
             }
 
             break;
@@ -143,8 +143,8 @@ public static void StartJavaProcess()
         /*
         "/c {compiler} {filename} && {runtime} -cp \".;{lib folder}/*\" {entry-class} {arguments}"
         */
-        RedirectStandardOutput = true,
-        RedirectStandardError = true,
+        //RedirectStandardOutput = true,
+        //RedirectStandardError = true,
         UseShellExecute = false,
         CreateNoWindow = true
     };
