@@ -18,7 +18,6 @@ public static string LogsFilePath = "C:/Users/DESKTOP-A/Desktop/test-environment
 
 public static string Message = ""; // Use JSON if needed
 
-public static bool ExitIntermediate = false;
 
 public class MethodInvocRequest
 {
@@ -41,21 +40,8 @@ public static void InitiateService()
         server.Start();
         Console.WriteLine($"Server started on 127.0.0.1:{port} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
         StartJavaProcess();
-        // Loop to accept one client at a time
-        while (!ExitIntermediate)
-        {
-            client = server.AcceptTcpClient(); // Blocks until a client connects
-            Console.WriteLine($"Client connected at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
-            // Keep client open until it disconnects
-            while (client != null && client.Connected)
-            {
-                SendCommand();//sends command
-                Console.WriteLine("got from client: " + ReceiveReturnedValue());
-            }
-
-            break;
-        }
-        EndService();
+        client = server.AcceptTcpClient(); // Blocks until a client connects
+        Console.WriteLine($"Client connected at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
     }
     catch (SocketException e)
     {
@@ -176,10 +162,12 @@ while (!exit)
         Console.WriteLine(line);
         Message = line.Trim();
         InitiateService();
+        SendCommand();
+        ReceiveReturnedValue();
     }
     else if (line.Contains("exit"))
     {
-        ExitIntermediate = true;
+        EndService();
         break;
     }
 }

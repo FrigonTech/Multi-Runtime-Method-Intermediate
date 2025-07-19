@@ -278,8 +278,8 @@ class Program{
 
     public static void StartLFTUCServer(String IPAddress, int port, float swim, boolean lmao){
         String message = "\nStarting Server At: " + IPAddress + ":" + port + "/" + swim + "\\" + lmao;
-        returnValue = "string" + message;
         System.out.println(message);
         WriteInLogs("LFTUCPCLogs", message);
+        returnValue = "string" + message;
     }
 }
