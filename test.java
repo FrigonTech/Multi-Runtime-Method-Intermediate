@@ -71,13 +71,13 @@ class Program{
     }
 
     //write in log file function's overload
-    public static void WriteInLogs(String name, String line){
-        WriteInLogs(name, line, "PRO");
+    public static void WriteInLogs(String line){
+        WriteInLogs(line, "PRO");
     }
 
     //write in log txt file with the time and the date and the log code of a line.
     //call this directly to create a log file (if not already there) and then write in it as normal
-    public static void WriteInLogs(String name, String line, String logCode) {
+    public static void WriteInLogs(String line, String logCode) {
         try {
             String baseDir = LogFilePath;
             Path dirPath = Paths.get(baseDir);
@@ -85,7 +85,7 @@ class Program{
                 Files.createDirectories(dirPath);
             }
 
-            Path logFilePath = dirPath.resolve(name + ".txt");
+            Path logFilePath = dirPath.resolve("LFTUCPCLogs.txt");
 
             LocalDateTime now = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss - dd/MM/yyyy");
@@ -204,7 +204,7 @@ class Program{
                             method.invoke(null, parsedParams.toArray());
                         } catch (Exception e) {
                             System.out.println("Error invoking " + methodName + ": " + e.getMessage());
-                            WriteInLogs("LFTUCPCLogs", "Error invoking " + methodName + ": " + e.getMessage(), "ERR");
+                            WriteInLogs("Error invoking " + methodName + ": " + e.getMessage(), "ERR");
                         }
 
                     }else{
@@ -216,7 +216,7 @@ class Program{
                             method.invoke(null); // No parameters passed
                         } catch (Exception e) {
                             System.out.println("Error invoking " + methodName + ": " + e.getMessage());
-                            WriteInLogs("LFTUCPCLogs", "Error invoking " + methodName + ": " + e.getMessage(), "ERR");
+                            WriteInLogs("Error invoking " + methodName + ": " + e.getMessage(), "ERR");
                         }
                     }
                 }
@@ -233,7 +233,7 @@ class Program{
             int port;
             try {
                 port = Integer.parseInt(args[0]);
-                WriteInLogs("LFTUCPCLogs", "port: " + port);
+                WriteInLogs("port: " + port);
             } catch (Exception ex) {
                 port = 54321; // fallback port
                 System.out.println("Can't parse port: " + ex);
@@ -257,7 +257,7 @@ class Program{
                         RunMethod(receivedMessage);
                         out.write(returnValue.toString());
                         out.flush();
-                        WriteInLogs("LFTUCPCLogs", receivedMessage);
+                        WriteInLogs(receivedMessage);
                         break; // 🔁 Exit after logging the first valid message
                     }
                 }
@@ -279,7 +279,7 @@ class Program{
     public static void StartLFTUCServer(String IPAddress, int port, float swim, boolean lmao){
         String message = "\nStarting Server At: " + IPAddress + ":" + port + "/" + swim + "\\" + lmao;
         System.out.println(message);
-        WriteInLogs("LFTUCPCLogs", message);
+        WriteInLogs(message);
         returnValue = "string" + message;
     }
 }
