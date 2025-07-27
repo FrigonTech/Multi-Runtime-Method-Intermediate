@@ -1,13 +1,11 @@
 import java.util.*;
 import java.lang.reflect.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.net.*;
+import java.io.*;
 
 //Command Codes:
 //a: method invocation requests
@@ -39,21 +37,8 @@ class Program{
 
     //Json file REF that we're gonna check the method requests in
     public static String methodInvocReq_Path_String = "command_Invoc_Requests.json";    
-    public static File methodInvocReq_Json = new File(methodInvocReq_Path_String);//file handler object
-    //Json Array to store all the statements from our json file
-    public static List<InvocDataClass> InvocFileData;
-    //Json Invoc Request File Data Format Declaration For Deserialization
-    public static class InvocDataClass{
-        public int Index;
-        public String CommandCode;
-        public String MethodToInvocate;
-
-        public InvocDataClass(int index, String CMDCode, String Method){
-            this.Index = index;
-            this.CommandCode = CMDCode;
-            this.MethodToInvocate = Method;
-        }
-    }
+    //return value along with their datatype
+    public static String returnValue = "--$null";
 
     //create a log file in the same directory in order to store logs or function outputs and errors.
     public static void CreateLogFile(String name){
@@ -72,8 +57,8 @@ class Program{
     }
 
     //write in log file function's overload
-    public static void WriteInLogs(String name, String line){
-        WriteInLogs(name, line, "PRO");
+    public static void WriteInLogs(String line){
+        WriteInLogs("LFTUCPCLogs", line, "PRO");
     }
 
     //write in log txt file with the time and the date and the log code of a line.
@@ -234,34 +219,49 @@ class Program{
             int port;
             try {
                 port = Integer.parseInt(args[0]);
-                WriteInLogs("LFTUCPCLogs", "port: " + port);
+                WriteInLogs("port: " + port);
             } catch (Exception ex) {
                 port = 54321; // fallback port
-                System.out.println("Can't parse port: " + ex);
+                WriteInLogs("Can't parse port: " + ex);
             }
 
-            try (
-                Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            ) {
-                System.out.println("Connection to CSX server successful");
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
+                WriteInLogs("Server started on port " + port);
 
-                // ❗ Wait indefinitely for message (blocking call)
-                String receivedMessage;
-                while ((receivedMessage = in.readLine()) != null) {
-                    if (!receivedMessage.trim().isEmpty()) {
-                        System.out.println("Received: " + receivedMessage);
-                        WriteInLogs("LFTUCPCLogs", receivedMessage);
-                        break; // 🔁 Exit after logging the first valid message
-                    }
+                while (true) {
+                    Socket clientSocket = serverSocket.accept(); // Accept client connection
+                    WriteInLogs("Client connected: " + clientSocket.getRemoteSocketAddress());
+
+                    // Setup input and output streams for the client
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
+                    PrintWriter output = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8), true);
+
+                    String message;
+
+                    // Read bytes in a loop
+                    while ((message = reader.readLine()) != null) {
+                        WriteInLogs("Received from client: " + message);
+
+                        RunMethod(message);
+                        output.println(returnValue);
+
+                        if ("exit".equalsIgnoreCase(message)) {
+                            WriteInLogs("Client requested exit.");
+                            break;
+                        }
+                    }               
+
+                    clientSocket.close();
+                    WriteInLogs("Client disconnected.");
                 }
-
-            } catch (IOException ex) {
-                System.out.println("Can't connect to CSX server or read from socket: " + ex);
+            } catch (IOException e) {
+                WriteInLogs("Server exception: " + e.getMessage());
             }
+
         } else {
-            System.out.println("No port argument provided.");
+            WriteInLogs("No port argument provided.");
         }
+
     }
 
 
@@ -272,7 +272,8 @@ class Program{
 
     public static void StartLFTUCServer(String IPAddress, int port, float swim, boolean lmao){
         String message = "\nStarting Server At: " + IPAddress + ":" + port + "/" + swim + "\\" + lmao; 
+        returnValue = message;
         System.out.println(message);
-        WriteInLogs("LFTUCPCLogs", message);
+        WriteInLogs(message);
     }
 }

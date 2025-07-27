@@ -11,95 +11,83 @@ using System.Text;
 
 public static int commandCodeIndex = 0;
 public static string fileName = "command_Invoc_Requests.json";
-public static TcpClient client;
+public static TcpClient client = new TcpClient();
+public static NetworkStream clientStream;
 public static int port = 54321;
 
-string response = ""; // Use JSON if needed
+public static string message = "";
 
-public class MethodInvocRequest
+public static bool ConnectToRuntime()
 {
-    public string index { get; set; }
-    public string commandCode { get; set; }
-    public string MethodAndParameter { get; set; }
-
-    public MethodInvocRequest(string codename, string function)
+    MakeMethodInvocRequest();
+    try
     {
-        commandCode = codename;
-        MethodAndParameter = function;
+        client.Connect(IPAddress.Loopback, port);
+        clientStream = client.GetStream();
+        return true;
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine("err connecting: " + ex);
+        return false;
+    }
+
 }
 
-public static void InitiateService()
+public static void SendToRuntime()
 {
     try
     {
-        var server = new TcpListener(IPAddress.Loopback, port);
-        server.Start();
-        Console.WriteLine($"Server started on 127.0.0.1:{port} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
-        // Loop to accept one client at a time
-        while (true)
+        using (var writer = new StreamWriter(clientStream, new System.Text.UTF8Encoding(false), leaveOpen: true))
         {
-            MakeMethodInvocRequest("lmai");
-            client = server.AcceptTcpClient(); // Blocks until a client connects
-            Console.WriteLine($"Client connected at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
-            // Keep client open until it disconnects
-            while (client != null && client.Connected)
-            {
-                SendCommand();//sends command
-                Console.WriteLine($"Client disconnected at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
-                EndService();
-                System.Threading.Thread.Sleep(100); // Prevent tight loop
-            }
-            
-            break;
-        }
+            writer.WriteLine(message);  // automatically adds \n
+            writer.Flush();
+            Console.WriteLine("Sent message to server: " + message);
+        }     
     }
-    catch (SocketException e)
+    catch (IOException ex)
     {
-        Console.WriteLine("Socket error: " + e.Message);
+        Console.WriteLine("err sending message: " + ex);
     }
 }
 
-public static void SendCommand()
+public static string GetReplyFromRuntime()
 {
-    if (client != null && client.Connected)
+    string returnResponse = "--$null";
+    try
     {
-        try
-        {
-            string response = ""; // Use JSON if needed
-            byte[] responseBytes = Encoding.UTF8.GetBytes(response + Environment.NewLine);
-            client.GetStream().Write(responseBytes, 0, responseBytes.Length);
-            Console.WriteLine($"Sent to client: {response} at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
-        }
-        catch (IOException e)
-        {
-            Console.WriteLine("Error sending message: " + e.Message);
-        }
+        byte[] buffer = new byte[1024];
+        int bytesRead = clientStream.Read(buffer, 0, buffer.Length);
+        returnResponse = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+        Console.WriteLine("Message received: " + returnResponse);
     }
-    else
+    catch (IOException ex)
     {
-        Console.WriteLine("No client connected, can't send message :|");
+        Console.WriteLine("err receiving response: " + ex);
     }
+
+    return returnResponse;
 }
 
-public static void EndService()
+public static bool DisconnectFromServer(bool ShutdoownServer)
 {
     try
     {
-        if (client != null || !client.Connected)
-        {
-            client.GetStream().Close();
-            client.Close();
-            Console.WriteLine($"Client connection closed at {DateTime.Now:yyyy-MM-dd HH:mm:ss} IST");
-        }
+        message = "exit";
+        SendToRuntime();
+        clientStream.Close();
+        client.Close();
+        return true;
     }
-    catch (Exception e)
+    catch (Exception ex)
     {
-        Console.WriteLine("Error during cleanup: " + e.Message);
+        Console.WriteLine("Err disconnecting: " + ex);
+        return false;
     }
+    
 }
 
-public static void MakeMethodInvocRequest(string function)
+public static void MakeMethodInvocRequest()
 {
     // Launch Java client (original process control)
     var javaProcess = new ProcessStartInfo
@@ -108,9 +96,10 @@ public static void MakeMethodInvocRequest(string function)
         Arguments = $"/c javac test.java && java -cp \".;lib/*\" Program {port}",
         /*
         "/c {compiler} {filename} && {runtime} -cp \".;{lib folder}/*\" {entry-class} {arguments}"
-        */
+        
         RedirectStandardOutput = true,
         RedirectStandardError = true,
+        */
         UseShellExecute = false,
         CreateNoWindow = true
     };
@@ -118,20 +107,16 @@ public static void MakeMethodInvocRequest(string function)
     {
         var process = Process.Start(javaProcess);
 
-        // Read and print output live
-        Task.Run(() => Console.WriteLine(process.StandardOutput.ReadToEnd()));
-        Task.Run(() => Console.WriteLine(process.StandardError.ReadToEnd()));
-        
-        Console.WriteLine("Started Java client.");
+        Console.WriteLine("Started Java Server.");
     }
     catch (Exception e)
     {
-        Console.WriteLine("Error starting Java client: " + e.Message);
+        Console.WriteLine("Error starting Java server: " + e.Message);
     }
 }
 
 bool exit = false;
-
+ConnectToRuntime();
 while (!exit)
 {
     Console.Write("LFTUC CSX Interop controller: ");
@@ -140,11 +125,14 @@ while (!exit)
     if (line.Contains("-"))
     {
         Console.WriteLine(line);
-        InitiateService();
+        message = line.Trim();
+        SendToRuntime();
+        string returns = GetReplyFromRuntime();
+        Console.WriteLine("returned: "+returns.Trim());
     }
     else if (line.Contains("exit"))
     {
-        EndService();
+        DisconnectFromServer(true); //disconnect and additionally shutdown the server as well
         break;
     }
 }
