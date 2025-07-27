@@ -7,7 +7,8 @@
 **MRMI** (Multi-Runtime Method Intermediate) is an original cross-runtime communication technique developed by **Frigon Tech**. It enables one compiled program to invoke functions in another compiled module — regardless of language — using socket-based messaging and a standardized, typed command format.
 
 ### ⚙️ How It Works
-
+- The independent script works as the listener and the controlled script (part of the main program) works as a client making requests and getting return values of independent script in return.
+  
 - A calling runtime sends a structured command like:  
   `FunctionName-strHello,int42,booltrue`
 
@@ -27,7 +28,7 @@
 
 ### 💡 Use Case
 
-MRMI is ideal for systems where modules written in different languages need to interoperate at runtime, without recompilation or tight integration — enabling flexible, plug-and-play architecture across platforms.
+MRMI is ideal for *POLYGLOT* systems where modules written in different languages need to interoperate at runtime, without recompilation or tight integration — enabling flexible, plug-and-play architecture across platforms.
 
 > Developed and maintained by **Frigon Tech**  
 > GitHub: [github.com/FrigonTech](https://github.com/FrigonTech)
