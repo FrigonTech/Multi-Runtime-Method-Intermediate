@@ -253,6 +253,7 @@ class Program{
 
                     clientSocket.close();
                     WriteInLogs("Client disconnected.");
+                    System.exit(0);
                 }
             } catch (IOException e) {
                 WriteInLogs("Server exception: " + e.getMessage());
