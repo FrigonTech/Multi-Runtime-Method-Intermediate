@@ -31,5 +31,7 @@
 MRMI is ideal for *POLYGLOT* systems where modules written in different languages need to interoperate at runtime, without recompilation or tight integration — enabling flexible, plug-and-play architecture across platforms.
 Has only been tested for non-obfuscated code yet in a windows environment, same thing with few tweaks may work on Mac and Linux too. Working with obfuscated code is still in progress
 
+If anyone of you test or make this work with obfuscated code, feel free to contact me at email: aloknathjha77@gmail.com
+
 > Developed and maintained by **Frigon Tech**  
 > GitHub: [github.com/FrigonTech](https://github.com/FrigonTech)
